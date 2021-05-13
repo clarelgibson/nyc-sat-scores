@@ -1,6 +1,7 @@
 # NYC SAT Scores
 A project looking at SAT scores for New York City public schools. Inspired by [this][1] tutorial from [Dataquest][2].
 # Scope
+*Amended from the [Dataquest tutorial blog][1]*
 In this project, we look at the [SAT scores][3] of high schoolers in New York City, along with various demographic and other information about them. The SAT, or Scholastic Aptitude Test, is a test that high schoolers take in the US before applying to college. Colleges take the test scores into account when making admissions decisions, so it’s fairly important to do well on. The test is divided into 3 sections, each of which is scored out of 800 points. The total score is out of 2400 (although this has changed back and forth a few times, the scores in this dataset are out of 2400). High schools are often ranked by their average SAT scores, and high SAT scores are considered a sign of how good a school district is.
 
 There have been [allegations][4] about the SAT being unfair to certain racial groups in the US, so doing this analysis on New York City data will help shed some light on the fairness of the SAT.
