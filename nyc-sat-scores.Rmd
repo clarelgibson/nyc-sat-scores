@@ -1,0 +1,58 @@
+---
+title: "nyc-sat-scores"
+author: "Clare Gibson"
+date: "13/05/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# NYC SAT Scores
+
+## Setup
+First we will load the libraries we need for this analysis.
+```{r libraries, results='hide'}
+library(tidyverse)
+```
+
+## Scope
+*Amended from the [Dataquest tutorial blog][1]*
+In this project, we look at the [SAT scores][2] of high schoolers in New York City, along with various demographic and other information about them. The SAT, or Scholastic Aptitude Test, is a test that high schoolers take in the US before applying to college. Colleges take the test scores into account when making admissions decisions, so it’s fairly important to do well on. The test is divided into 3 sections, each of which is scored out of 800 points. The total score is out of 2400 (although this has changed back and forth a few times, the scores in this dataset are out of 2400). High schools are often ranked by their average SAT scores, and high SAT scores are considered a sign of how good a school district is.
+
+There have been [allegations][3] about the SAT being unfair to certain racial groups in the US, so doing this analysis on New York City data will help shed some light on the fairness of the SAT.
+
+[1]: <https://www.dataquest.io/blog/data-science-portfolio-project/> "Data Science Portfolio Tutorial by Dataquest.io"
+[2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
+[3]: <https://www.brookings.edu/research/race-gaps-in-sat-scores-highlight-inequality-and-hinder-upward-mobility/> "Race gaps in SAT scores"
+
+## Understanding the data
+We are using data on the SAT scores of high schoolers, along with other data sets relating to demographics and other information.
+
+Let's read each data file into a df
+
+```{r read, echo=TRUE, results='hide'}
+# Get the list of files to read in
+files <- list.files(path = "data-in", pattern = "*.csv", full.names = TRUE)
+
+# Read in all files to a list of df
+# The setNames function will apply the filename as the name of each element
+# in the list
+df_list <- setNames(lapply(files, read_csv), files)
+
+# Create a variable for each df
+ap_results <- df_list[[1]]
+class_size <- df_list[[2]]
+demographics <- df_list[[3]]
+district_maps <- df_list[[4]]
+grad_outcomes <- df_list[[5]]
+math_results <- df_list[[6]]
+sat_scores <- df_list[[7]]
+school_attendance <- df_list[[8]]
+```
+Once we have read in the data, we can use the `head` function to view the first 6 rows of data in each df.
+```{r head, echo=TRUE}
+lapply(df_list, head)
+```
+
