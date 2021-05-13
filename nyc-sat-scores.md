@@ -1,11 +1,9 @@
-nyc-sat-scores
+NYC SAT Scores
 ================
 Clare Gibson
-13/05/2021
+2021-05-13
 
-# NYC SAT Scores
-
-## Setup
+# Setup
 
 First we will load the libraries we need for this analysis.
 
@@ -13,21 +11,11 @@ First we will load the libraries we need for this analysis.
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
-
-    ## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
-    ## ✓ tibble  3.1.0     ✓ dplyr   1.0.5
-    ## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
-    ## ✓ readr   1.4.0     ✓ forcats 0.5.1
-
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
-
-## Scope
+# Scope
 
 *Amended from the [Dataquest tutorial
 blog](https://www.dataquest.io/blog/data-science-portfolio-project/ "Data Science Portfolio Tutorial by Dataquest.io")*
+
 In this project, we look at the [SAT
 scores](https://en.wikipedia.org/wiki/SAT "SAT wiki") of high schoolers
 in New York City, along with various demographic and other information
@@ -47,7 +35,7 @@ about the SAT being unfair to certain racial groups in the US, so doing
 this analysis on New York City data will help shed some light on the
 fairness of the SAT.
 
-## Understanding the data
+# Understanding the data
 
 We are using data on the SAT scores of high schoolers, along with other
 data sets relating to demographics and other information.
@@ -62,126 +50,7 @@ files <- list.files(path = "data-in", pattern = "*.csv", full.names = TRUE)
 # The setNames function will apply the filename as the name of each element
 # in the list
 df_list <- setNames(lapply(files, read_csv), files)
-```
 
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   DBN = col_character(),
-    ##   SchoolName = col_character(),
-    ##   `AP Test Takers` = col_double(),
-    ##   `Total Exams Taken` = col_double(),
-    ##   `Number of Exams with scores 3 4 or 5` = col_double()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   CSD = col_double(),
-    ##   BOROUGH = col_character(),
-    ##   `SCHOOL CODE` = col_character(),
-    ##   `SCHOOL NAME` = col_character(),
-    ##   GRADE = col_character(),
-    ##   `PROGRAM TYPE` = col_character(),
-    ##   `CORE SUBJECT (MS CORE and 9-12 ONLY)` = col_character(),
-    ##   `CORE COURSE (MS CORE and 9-12 ONLY)` = col_character(),
-    ##   `SERVICE CATEGORY(K-9* ONLY)` = col_character(),
-    ##   `NUMBER OF STUDENTS / SEATS FILLED` = col_double(),
-    ##   `NUMBER OF SECTIONS` = col_double(),
-    ##   `AVERAGE CLASS SIZE` = col_double(),
-    ##   `SIZE OF SMALLEST CLASS` = col_double(),
-    ##   `SIZE OF LARGEST CLASS` = col_double(),
-    ##   `DATA SOURCE` = col_character(),
-    ##   `SCHOOLWIDE PUPIL-TEACHER RATIO` = col_double()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   DBN = col_character(),
-    ##   Name = col_character()
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## Warning: 6 parsing failures.
-    ##  row        col expected actual                       file
-    ## 1124 fl_percent a double    n/a 'data-in/demographics.csv'
-    ## 2154 fl_percent a double    n/a 'data-in/demographics.csv'
-    ## 2161 fl_percent a double    n/a 'data-in/demographics.csv'
-    ## 4299 fl_percent a double    n/a 'data-in/demographics.csv'
-    ## 8523 fl_percent a double    n/a 'data-in/demographics.csv'
-    ## .... .......... ........ ...... ..........................
-    ## See problems(...) for more details.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   the_geom = col_character(),
-    ##   SchoolDist = col_double(),
-    ##   Shape_Area = col_double(),
-    ##   Shape_Leng = col_double()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   Demographic = col_character(),
-    ##   DBN = col_character(),
-    ##   `School Name` = col_character(),
-    ##   Cohort = col_character(),
-    ##   `Total Grads - n` = col_character(),
-    ##   `Total Regents - n` = col_character(),
-    ##   `Advanced Regents - n` = col_character(),
-    ##   `Regents w/o Advanced - n` = col_character(),
-    ##   `Local - n` = col_character(),
-    ##   `Still Enrolled - n` = col_character(),
-    ##   `Dropped Out - n` = col_character()
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   DBN = col_character(),
-    ##   Grade = col_character(),
-    ##   Year = col_double(),
-    ##   Category = col_character(),
-    ##   `Number Tested` = col_double(),
-    ##   `Mean Scale Score` = col_double(),
-    ##   `Level 1 #` = col_double(),
-    ##   `Level 1 %` = col_double(),
-    ##   `Level 2 #` = col_double(),
-    ##   `Level 2 %` = col_double(),
-    ##   `Level 3 #` = col_double(),
-    ##   `Level 3 %` = col_double(),
-    ##   `Level 4 #` = col_double(),
-    ##   `Level 4 %` = col_double(),
-    ##   `Level 3+4 #` = col_double(),
-    ##   `Level 3+4 %` = col_double()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   DBN = col_character(),
-    ##   `SCHOOL NAME` = col_character(),
-    ##   `Num of SAT Test Takers` = col_character(),
-    ##   `SAT Critical Reading Avg. Score` = col_character(),
-    ##   `SAT Math Avg. Score` = col_character(),
-    ##   `SAT Writing Avg. Score` = col_character()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   District = col_character(),
-    ##   `YTD % Attendance (Avg)` = col_double(),
-    ##   `YTD Enrollment(Avg)` = col_double()
-    ## )
-
-``` r
 # Create a variable for each df
 ap_results <- df_list[[1]]
 class_size <- df_list[[2]]
@@ -314,3 +183,26 @@ lapply(df_list, head)
     ## 4 DISTRICT 04                     91.1                 14252
     ## 5 DISTRICT 05                     89.1                 13170
     ## 6 DISTRICT 06                     91.3                 25733
+
+Some items of interest from this initial peek:
+
+-   Most of the data sets contain a `DBN` column which appears to be a
+    unique identifier for the school.
+-   Some of the data sets contain records for more than one year, others
+    are for a single year.
+-   Some of the columns may need further cleaning (e.g. percentages may
+    need to be divided by 100)
+
+# Unifying the data
+
+Our next step is to combine the different data sets in to one large
+dataframe, so that we can compare columns across data sets. It looks
+like we may be able to use the `DBN` column as a joining column.
+
+However, some data sets do not have a `DBN` column:
+
+-   `class size`: it looks like we can construct the `DBN` by using a
+    combination of `CSD`, `BOROUGH` and `SCHOOL CODE`.
+-   `district_maps` and `school_attendance`: these data sets appear to
+    be aggregated at the school district level rather than the
+    individual school level.

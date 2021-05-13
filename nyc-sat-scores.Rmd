@@ -1,7 +1,7 @@
 ---
-title: "nyc-sat-scores"
+title: "NYC SAT Scores"
 author: "Clare Gibson"
-date: "13/05/2021"
+date: "2021-05-13"
 output: github_document
 ---
 
@@ -9,16 +9,15 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# NYC SAT Scores
-
-## Setup
+# Setup
 First we will load the libraries we need for this analysis.
-```{r libraries, results='hide'}
+```{r libraries, message=FALSE}
 library(tidyverse)
 ```
 
-## Scope
+# Scope
 *Amended from the [Dataquest tutorial blog][1]*
+
 In this project, we look at the [SAT scores][2] of high schoolers in New York City, along with various demographic and other information about them. The SAT, or Scholastic Aptitude Test, is a test that high schoolers take in the US before applying to college. Colleges take the test scores into account when making admissions decisions, so it’s fairly important to do well on. The test is divided into 3 sections, each of which is scored out of 800 points. The total score is out of 2400 (although this has changed back and forth a few times, the scores in this dataset are out of 2400). High schools are often ranked by their average SAT scores, and high SAT scores are considered a sign of how good a school district is.
 
 There have been [allegations][3] about the SAT being unfair to certain racial groups in the US, so doing this analysis on New York City data will help shed some light on the fairness of the SAT.
@@ -27,12 +26,12 @@ There have been [allegations][3] about the SAT being unfair to certain racial gr
 [2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
 [3]: <https://www.brookings.edu/research/race-gaps-in-sat-scores-highlight-inequality-and-hinder-upward-mobility/> "Race gaps in SAT scores"
 
-## Understanding the data
+# Understanding the data
 We are using data on the SAT scores of high schoolers, along with other data sets relating to demographics and other information.
 
 Let's read each data file into a df
 
-```{r read, echo=TRUE, results='hide'}
+```{r read, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # Get the list of files to read in
 files <- list.files(path = "data-in", pattern = "*.csv", full.names = TRUE)
 
@@ -55,4 +54,16 @@ Once we have read in the data, we can use the `head` function to view the first 
 ```{r head, echo=TRUE}
 lapply(df_list, head)
 ```
+Some items of interest from this initial peek:
 
+* Most of the data sets contain a `DBN` column which appears to be a unique identifier for the school.
+* Some of the data sets contain records for more than one year, others are for a single year.
+* Some of the columns may need further cleaning (e.g. percentages may need to be divided by 100)
+
+# Unifying the data
+Our next step is to combine the different data sets in to one large dataframe, so that we can compare columns across data sets. It looks like we may be able to use the `DBN` column as a joining column.
+
+However, some data sets do not have a `DBN` column:
+
+* `class size`: it looks like we can construct the `DBN` by using a combination of `CSD`, `BOROUGH` and `SCHOOL CODE`.
+* `district_maps` and `school_attendance`: these data sets appear to be aggregated at the school district level rather than the individual school level.
