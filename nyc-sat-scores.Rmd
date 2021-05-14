@@ -5,14 +5,15 @@ date: "2021-05-13"
 output: github_document
 ---
 
+# Setup
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Setup
 First we will load the libraries we need for this analysis.
 ```{r libraries, message=FALSE}
 library(tidyverse)
+library(janitor)
 ```
 
 # Scope
@@ -22,48 +23,83 @@ In this project, we look at the [SAT scores][2] of high schoolers in New York Ci
 
 There have been [allegations][3] about the SAT being unfair to certain racial groups in the US, so doing this analysis on New York City data will help shed some light on the fairness of the SAT.
 
-[1]: <https://www.dataquest.io/blog/data-science-portfolio-project/> "Data Science Portfolio Tutorial by Dataquest.io"
-[2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
-[3]: <https://www.brookings.edu/research/race-gaps-in-sat-scores-highlight-inequality-and-hinder-upward-mobility/> "Race gaps in SAT scores"
-
 # Understanding the data
 We are using data on the SAT scores of high schoolers, along with other data sets relating to demographics and other information.
 
-Let's read each data file into a df
-
+Let's read each data file into a df.
 ```{r read, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # Get the list of files to read in
 files <- list.files(path = "data-in", pattern = "*.csv", full.names = TRUE)
 
+# Extract the data set names from the filenames. We can use these to name
+# elements in our list of df
+names <- str_extract(files, "(?<=data-in\\/)(.+)(?=\\.csv)")
+
 # Read in all files to a list of df
 # The setNames function will apply the filename as the name of each element
 # in the list
-df_list <- setNames(lapply(files, read_csv), files)
-
-# Create a variable for each df
-ap_results <- df_list[[1]]
-class_size <- df_list[[2]]
-demographics <- df_list[[3]]
-district_maps <- df_list[[4]]
-grad_outcomes <- df_list[[5]]
-math_results <- df_list[[6]]
-sat_scores <- df_list[[7]]
-school_attendance <- df_list[[8]]
+data <- setNames(lapply(files, read_csv), names)
 ```
-Once we have read in the data, we can use the `head` function to view the first 6 rows of data in each df.
+Once we have read in the data, we can use the `glimpse` function to get a peek at the data in each df.
 ```{r head, echo=TRUE}
-lapply(df_list, head)
+lapply(data, glimpse)
 ```
 Some items of interest from this initial peek:
 
+* Many of the column headings are capitalized and contain spaces. To make things easier in R, I will need to clean them.
 * Most of the data sets contain a `DBN` column which appears to be a unique identifier for the school.
 * Some of the data sets contain records for more than one year, others are for a single year.
 * Some of the columns may need further cleaning (e.g. percentages may need to be divided by 100)
 
+## Cleaning the column headings
+The `janitor` package has a handy function called `clean_names()` that will ensure column names are unique and consist only of the `_` character, numbers and lowercase letters.
+```{r clean names}
+data <- 
+  lapply(data, clean_names)
+```
+
+
 # Unifying the data
-Our next step is to combine the different data sets in to one large dataframe, so that we can compare columns across data sets. It looks like we may be able to use the `DBN` column as a joining column.
+Our next step is to combine the different data sets in to one large dataframe, so that we can compare columns across data sets. It looks like we may be able to use `dbn` as a joining column.
 
-However, some data sets do not have a `DBN` column:
+However, some data sets do not have a `dbn` column:
 
-* `class size`: it looks like we can construct the `DBN` by using a combination of `CSD`, `BOROUGH` and `SCHOOL CODE`.
+* `class_size`: it looks like we can construct the `dbn` by using a combination of `csd`, `borough` and `school_code`.
 * `district_maps` and `school_attendance`: these data sets appear to be aggregated at the school district level rather than the individual school level.
+
+## Adding `dbn` to `class_size`
+Let's take a look at `dbn` in one of the other data sets where it appears.
+```{r dbn}
+head(data$sat_scores$dbn)
+```
+As [this article][4] explains, the DBN or District Borough Number is the combination of District Number, the letter code for the borough and the number of the school.
+
+![](https://teachnyc.zendesk.com/hc/article_attachments/360079392731/Screen_Shot_2020-12-10_at_10.55.35_AM.png)
+Let's look again at the column headings we have in the `class_size` df.
+```{r class_size names}
+names(data$class_size)
+```
+From the [data dictionary][5] that accompanies this data set on the [NYC Open Data][6] site, I know that `csd` is the Community School District number, `borough` is the borough code and `school_code` is the school code. 
+
+Let's have a look at how these columns look in the `class_size` df.
+```{r class_size DBN columns}
+data$class_size %>% 
+  select(csd, borough, school_code) %>% 
+  head()
+```
+So it looks like in this case the `school_code` column is already a concatenation of the borough code and the school code. We simply need to add the district number, with a leading 0.
+```{r class_size add dbn}
+data$class_size <- 
+  data$class_size %>% 
+  mutate(dbn = paste0(str_pad(csd, 2, side = "left", pad = "0"), school_code))
+
+head(data$class_size$dbn)
+```
+
+
+[1]: <https://www.dataquest.io/blog/data-science-portfolio-project/> "Data Science Portfolio Tutorial by Dataquest.io"
+[2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
+[3]: <https://www.brookings.edu/research/race-gaps-in-sat-scores-highlight-inequality-and-hinder-upward-mobility/> "Race gaps in SAT scores"
+[4]: <https://teachnyc.zendesk.com/hc/en-us/articles/360053601831-What-is-a-DBN-District-Borough-Number-> "NYC DBN"
+[5]: <https://data.cityofnewyork.us/api/views/urz7-pzb3/files/73f3bc71-a52a-4a80-b496-ab2a43b8021f?download=true&filename=Class_Size_Open_Data_Dictionary.xlsx> "Class size data dictionary"
+[6]: <https://opendata.cityofnewyork.us/> "NYC Open Data"
