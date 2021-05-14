@@ -75,6 +75,7 @@ head(data$sat_scores$dbn)
 As [this article][4] explains, the DBN or District Borough Number is the combination of District Number, the letter code for the borough and the number of the school.
 
 ![](https://teachnyc.zendesk.com/hc/article_attachments/360079392731/Screen_Shot_2020-12-10_at_10.55.35_AM.png)
+
 Let's look again at the column headings we have in the `class_size` df.
 ```{r class_size names}
 names(data$class_size)
@@ -96,6 +97,21 @@ data$class_size <-
 head(data$class_size$dbn)
 ```
 
+## Adding in the surveys
+We also have some data relating to student, parent and teacher surveys about the quality of schools. These surveys include information about the perceived safety of each school, academic standards and more. We will need to add in this data before we can combine the data sets. The survey data is located in two `.txt` files in the `data-in` directory. These are tab-delimited files and we can read them in using `read_tsv()`.
+```{r read surveys, message=FALSE, warning=FALSE}
+# Get the list of files to read in 
+survey_files <- list.files(path = "data-in", pattern = "*.txt", full.names = TRUE)
+
+# Extract the data set names from the filenames. We can use these to name
+# elements in our list of df
+survey_names <- str_extract(survey_files, "(?<=data-in\\/)(.+)(?=\\.txt)")
+
+# Read in all files and append to the data list of df
+data <- c(data, setNames(lapply(survey_files, read_tsv), survey_names))
+```
+
+There are actually far too many columns in the survey data to be useful for our analysis. We can resolve this issue by looking at the [data dictionary][7] file that accompanies this data set on the [NYC Open Data][6] site. We'll use the list of fields in the data dictionary for our analysis.
 
 [1]: <https://www.dataquest.io/blog/data-science-portfolio-project/> "Data Science Portfolio Tutorial by Dataquest.io"
 [2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
@@ -103,3 +119,4 @@ head(data$class_size$dbn)
 [4]: <https://teachnyc.zendesk.com/hc/en-us/articles/360053601831-What-is-a-DBN-District-Borough-Number-> "NYC DBN"
 [5]: <https://data.cityofnewyork.us/api/views/urz7-pzb3/files/73f3bc71-a52a-4a80-b496-ab2a43b8021f?download=true&filename=Class_Size_Open_Data_Dictionary.xlsx> "Class size data dictionary"
 [6]: <https://opendata.cityofnewyork.us/> "NYC Open Data"
+[7]: <https://data.cityofnewyork.us/api/views/mnz3-dyi8/files/aa68d821-4dbb-4eb2-9448-3d8cbbad5044?download=true&filename=Survey%20Data%20Dictionary.xls> "Survey data dictionary"
