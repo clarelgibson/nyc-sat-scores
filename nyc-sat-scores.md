@@ -398,6 +398,7 @@ District Number, the letter code for the borough and the number of the
 school.
 
 ![](https://teachnyc.zendesk.com/hc/article_attachments/360079392731/Screen_Shot_2020-12-10_at_10.55.35_AM.png)
+
 Let’s look again at the column headings we have in the `class_size` df.
 
 ``` r
@@ -451,3 +452,60 @@ head(data$class_size$dbn)
 ```
 
     ## [1] "01M015" "01M015" "01M015" "01M015" "01M015" "01M015"
+
+## Adding in the surveys
+
+We also have some data relating to student, parent and teacher surveys
+about the quality of schools. These surveys include information about
+the perceived safety of each school, academic standards and more. We
+will need to add in this data before we can combine the data sets. The
+survey data is located in two `.txt` files in the `data-in` directory.
+These are tab-delimited files and we can read them in using
+`read_tsv()`.
+
+``` r
+# Get the list of files to read in 
+survey_files <- list.files(path = "data-in", pattern = "*.txt", full.names = TRUE)
+
+# Extract the data set names from the filenames. We can use these to name
+# elements in our list of df
+survey_names <- str_extract(survey_files, "(?<=data-in\\/)(.+)(?=\\.txt)")
+
+# Read in all files to a list of survey data
+survey_data <- setNames(lapply(survey_files, read_tsv), survey_names)
+```
+
+There are actually far too many columns in the survey data to be useful
+for our analysis. We can resolve this issue by looking at the [data
+dictionary](https://data.cityofnewyork.us/api/views/mnz3-dyi8/files/aa68d821-4dbb-4eb2-9448-3d8cbbad5044?download=true&filename=Survey%20Data%20Dictionary.xls "Survey data dictionary")
+file that accompanies this data set on the [NYC Open
+Data](https://opendata.cityofnewyork.us/ "NYC Open Data") site. We’ll
+use the list of fields in the first section of the data dictionary for
+our analysis.
+
+![](images/survey-data-dictionary.png)
+
+``` r
+# First we'll select the columns we need from the survey_all data
+survey_data$survey_all <-
+  survey_data$survey_all %>% 
+  select(dbn:aca_tot_11)
+
+# Then we'll select the columns we need from the survey_d75 data
+survey_data$survey_d75 <- 
+  survey_data$survey_d75 %>% 
+  select(dbn:aca_tot_11)
+```
+
+Now it looks like both of these df have the same column headings, so we
+can bind them into a single df and append that df to the main data list.
+
+``` r
+# Bind the two survey df into one df and clean the names
+survey_data <- survey_data %>% 
+  bind_rows() %>% 
+  clean_names()
+
+# Append the survey data to the data list
+data <- c(data, survey = list(survey_data))
+```
