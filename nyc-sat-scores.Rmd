@@ -40,9 +40,9 @@ names <- str_extract(files, "(?<=data-in\\/)(.+)(?=\\.csv)")
 # in the list
 data <- setNames(lapply(files, read_csv), names)
 ```
-Once we have read in the data, we can use the `glimpse` function to get a peek at the data in each df.
+Once we have read in the data, we can use the `names` function to see the column names in each df.
 ```{r head, echo=TRUE}
-lapply(data, glimpse)
+lapply(data, names)
 ```
 Some items of interest from this initial peek:
 
