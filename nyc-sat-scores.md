@@ -10,6 +10,7 @@ First we will load the libraries we need for this analysis.
 ``` r
 library(tidyverse)
 library(janitor)
+library(corrplot)
 ```
 
 # Scope
@@ -57,292 +58,111 @@ names <- str_extract(files, "(?<=data-in\\/)(.+)(?=\\.csv)")
 data <- setNames(lapply(files, read_csv), names)
 ```
 
-Once we have read in the data, we can use the `glimpse` function to get
-a peek at the data in each df.
+Once we have read in the data, we can use the `names` function to see
+the column names in each df.
 
 ``` r
-lapply(data, glimpse)
+lapply(data, names)
 ```
 
-    ## Rows: 258
-    ## Columns: 5
-    ## $ DBN                                    <chr> "01M448", "01M450", "01M515", "…
-    ## $ SchoolName                             <chr> "UNIVERSITY NEIGHBORHOOD H.S.",…
-    ## $ `AP Test Takers`                       <dbl> 39, 19, 24, 255, NA, 21, 99, 42…
-    ## $ `Total Exams Taken`                    <dbl> 49, 21, 26, 377, NA, 21, 117, 4…
-    ## $ `Number of Exams with scores 3 4 or 5` <dbl> 10, NA, 24, 191, NA, NA, 10, NA…
-    ## Rows: 27,611
-    ## Columns: 16
-    ## $ CSD                                    <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-    ## $ BOROUGH                                <chr> "M", "M", "M", "M", "M", "M", "…
-    ## $ `SCHOOL CODE`                          <chr> "M015", "M015", "M015", "M015",…
-    ## $ `SCHOOL NAME`                          <chr> "P.S. 015 Roberto Clemente", "P…
-    ## $ GRADE                                  <chr> "0K", "0K", "01", "01", "02", "…
-    ## $ `PROGRAM TYPE`                         <chr> "GEN ED", "CTT", "GEN ED", "CTT…
-    ## $ `CORE SUBJECT (MS CORE and 9-12 ONLY)` <chr> "-", "-", "-", "-", "-", "-", "…
-    ## $ `CORE COURSE (MS CORE and 9-12 ONLY)`  <chr> "-", "-", "-", "-", "-", "-", "…
-    ## $ `SERVICE CATEGORY(K-9* ONLY)`          <chr> "-", "-", "-", "-", "-", "-", "…
-    ## $ `NUMBER OF STUDENTS / SEATS FILLED`    <dbl> 19, 21, 17, 17, 15, 17, 12, 15,…
-    ## $ `NUMBER OF SECTIONS`                   <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1…
-    ## $ `AVERAGE CLASS SIZE`                   <dbl> 19.0, 21.0, 17.0, 17.0, 15.0, 1…
-    ## $ `SIZE OF SMALLEST CLASS`               <dbl> 19, 21, 17, 17, 15, 17, 12, 15,…
-    ## $ `SIZE OF LARGEST CLASS`                <dbl> 19, 21, 17, 17, 15, 17, 12, 15,…
-    ## $ `DATA SOURCE`                          <chr> "ATS", "ATS", "ATS", "ATS", "AT…
-    ## $ `SCHOOLWIDE PUPIL-TEACHER RATIO`       <dbl> NA, NA, NA, NA, NA, NA, NA, NA,…
-    ## Rows: 10,075
-    ## Columns: 38
-    ## $ DBN               <chr> "01M015", "01M015", "01M015", "01M015", "01M015", "0…
-    ## $ Name              <chr> "P.S. 015 ROBERTO CLEMENTE", "P.S. 015 ROBERTO CLEME…
-    ## $ schoolyear        <dbl> 20052006, 20062007, 20072008, 20082009, 20092010, 20…
-    ## $ fl_percent        <dbl> 89.4, 89.4, 89.4, 89.4, NA, NA, NA, 61.5, 61.5, 61.5…
-    ## $ frl_percent       <dbl> NA, NA, NA, NA, 96.5, 96.5, 89.4, NA, NA, NA, NA, 82…
-    ## $ total_enrollment  <dbl> 281, 243, 261, 252, 208, 203, 189, 402, 312, 338, 32…
-    ## $ prek              <dbl> 15, 15, 18, 17, 16, 13, 13, 15, 13, 28, 33, 35, 36, …
-    ## $ k                 <dbl> 36, 29, 43, 37, 40, 37, 31, 43, 37, 48, 44, 48, 53, …
-    ## $ grade1            <dbl> 40, 39, 39, 44, 28, 35, 35, 55, 45, 46, 56, 49, 53, …
-    ## $ grade2            <dbl> 33, 38, 36, 32, 32, 33, 28, 53, 52, 47, 44, 56, 47, …
-    ## $ grade3            <dbl> 38, 34, 38, 34, 30, 30, 25, 68, 47, 53, 53, 39, 41, …
-    ## $ grade4            <dbl> 52, 42, 47, 39, 24, 30, 28, 59, 61, 48, 48, 50, 49, …
-    ## $ grade5            <dbl> 29, 46, 40, 49, 38, 25, 29, 64, 57, 68, 47, 44, 49, …
-    ## $ grade6            <dbl> 38, NA, NA, NA, NA, NA, NA, 45, NA, NA, NA, NA, NA, …
-    ## $ grade7            <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ grade8            <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ grade9            <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ grade10           <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ grade11           <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ grade12           <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-    ## $ ell_num           <dbl> 36, 38, 52, 48, 40, 30, 20, 37, 30, 40, 27, 35, 31, …
-    ## $ ell_percent       <dbl> 12.8, 15.6, 19.9, 19.0, 19.2, 14.8, 10.6, 9.2, 9.6, …
-    ## $ sped_num          <dbl> 57, 55, 60, 62, 46, 46, 40, 93, 72, 75, 70, 71, 61, …
-    ## $ sped_percent      <dbl> 20.3, 22.6, 23.0, 24.6, 22.1, 22.7, 21.2, 23.1, 23.1…
-    ## $ ctt_num           <dbl> 25, 19, 20, 21, 14, 21, 23, 7, 13, 12, 15, 18, 17, 1…
-    ## $ selfcontained_num <dbl> 9, 15, 14, 17, 14, 9, 7, 37, 22, 19, 19, 22, 17, 16,…
-    ## $ asian_num         <dbl> 10, 18, 16, 16, 16, 13, 12, 40, 30, 42, 39, 43, 48, …
-    ## $ asian_per         <dbl> 3.6, 7.4, 6.1, 6.3, 7.7, 6.4, 6.3, 10.0, 9.6, 12.4, …
-    ## $ black_num         <dbl> 74, 68, 77, 75, 67, 75, 63, 103, 70, 72, 83, 87, 89,…
-    ## $ black_per         <dbl> 26.3, 28.0, 29.5, 29.8, 32.2, 36.9, 33.3, 25.6, 22.4…
-    ## $ hispanic_num      <dbl> 189, 153, 157, 149, 118, 110, 109, 207, 172, 186, 14…
-    ## $ hispanic_per      <dbl> 67.3, 63.0, 60.2, 59.1, 56.7, 54.2, 57.7, 51.5, 55.1…
-    ## $ white_num         <dbl> 5, 4, 7, 7, 6, 4, 4, 39, 19, 22, 32, 35, 31, 28, 10,…
-    ## $ white_per         <dbl> 1.8, 1.6, 2.7, 2.8, 2.9, 2.0, 2.1, 9.7, 6.1, 6.5, 9.…
-    ## $ male_num          <dbl> 158, 140, 143, 149, 124, 113, 97, 214, 157, 162, 156…
-    ## $ male_per          <dbl> 56.2, 57.6, 54.8, 59.1, 59.6, 55.7, 51.3, 53.2, 50.3…
-    ## $ female_num        <dbl> 123, 103, 118, 103, 84, 90, 92, 188, 155, 176, 169, …
-    ## $ female_per        <dbl> 43.8, 42.4, 45.2, 40.9, 40.4, 44.3, 48.7, 46.8, 49.7…
-    ## Rows: 33
-    ## Columns: 4
-    ## $ the_geom   <chr> "MULTIPOLYGON (((-73.97177411031375 40.725821281337225, -73…
-    ## $ SchoolDist <dbl> 1, 10, 11, 16, 12, 13, 14, 15, 6, 7, 8, 17, 18, 19, 2, 20, …
-    ## $ Shape_Area <dbl> 35160328, 282540990, 393227696, 46763620, 69097946, 1048707…
-    ## $ Shape_Leng <dbl> 28641.22, 94956.72, 305035.87, 35848.90, 48578.09, 86634.82…
-    ## Rows: 25,096
-    ## Columns: 23
-    ## $ Demographic                          <chr> "Total Cohort", "Total Cohort", "…
-    ## $ DBN                                  <chr> "01M292", "01M292", "01M292", "01…
-    ## $ `School Name`                        <chr> "HENRY STREET SCHOOL FOR INTERNAT…
-    ## $ Cohort                               <chr> "2003", "2004", "2005", "2006", "…
-    ## $ `Total Cohort`                       <dbl> 5, 55, 64, 78, 78, 64, 52, 87, 11…
-    ## $ `Total Grads - n`                    <chr> "s", "37", "43", "43", "44", "46"…
-    ## $ `Total Grads - % of cohort`          <dbl> NA, 67.3, 67.2, 55.1, 56.4, 71.9,…
-    ## $ `Total Regents - n`                  <chr> "s", "17", "27", "36", "37", "32"…
-    ## $ `Total Regents - % of cohort`        <dbl> NA, 30.9, 42.2, 46.2, 47.4, 50.0,…
-    ## $ `Total Regents - % of grads`         <dbl> NA, 45.9, 62.8, 83.7, 84.1, 69.6,…
-    ## $ `Advanced Regents - n`               <chr> "s", "0", "0", "0", "0", "7", "8"…
-    ## $ `Advanced Regents - % of cohort`     <dbl> NA, 0.0, 0.0, 0.0, 0.0, 10.9, 15.…
-    ## $ `Advanced Regents - % of grads`      <dbl> NA, 0.0, 0.0, 0.0, 0.0, 15.2, 24.…
-    ## $ `Regents w/o Advanced - n`           <chr> "s", "17", "27", "36", "37", "25"…
-    ## $ `Regents w/o Advanced - % of cohort` <dbl> NA, 30.9, 42.2, 46.2, 47.4, 39.1,…
-    ## $ `Regents w/o Advanced - % of grads`  <dbl> NA, 45.9, 62.8, 83.7, 84.1, 54.3,…
-    ## $ `Local - n`                          <chr> "s", "20", "16", "7", "7", "14", …
-    ## $ `Local - % of cohort`                <dbl> NA, 36.4, 25.0, 9.0, 9.0, 21.9, 2…
-    ## $ `Local - % of grads`                 <dbl> NA, 54.1, 37.2, 16.3, 15.9, 30.4,…
-    ## $ `Still Enrolled - n`                 <chr> "s", "15", "9", "16", "15", "10",…
-    ## $ `Still Enrolled - % of cohort`       <dbl> NA, 27.3, 14.1, 20.5, 19.2, 15.6,…
-    ## $ `Dropped Out - n`                    <chr> "s", "3", "9", "11", "11", "6", "…
-    ## $ `Dropped Out - % of cohort`          <dbl> NA, 5.5, 14.1, 14.1, 14.1, 9.4, 1…
-    ## Rows: 28,478
-    ## Columns: 16
-    ## $ DBN                <chr> "01M015", "01M015", "01M015", "01M015", "01M015", "…
-    ## $ Grade              <chr> "3", "3", "3", "3", "3", "3", "4", "4", "4", "4", "…
-    ## $ Year               <dbl> 2006, 2007, 2008, 2009, 2010, 2011, 2006, 2007, 200…
-    ## $ Category           <chr> "All Students", "All Students", "All Students", "Al…
-    ## $ `Number Tested`    <dbl> 39, 31, 37, 33, 26, 28, 49, 40, 41, 39, 29, 28, 31,…
-    ## $ `Mean Scale Score` <dbl> 667, 672, 668, 668, 677, 671, 629, 659, 655, 655, 6…
-    ## $ `Level 1 #`        <dbl> 2, 2, 0, 0, 6, 10, 20, 4, 5, 4, 7, 3, 12, 10, 3, 2,…
-    ## $ `Level 1 %`        <dbl> 5.1, 6.5, 0.0, 0.0, 23.1, 35.7, 40.8, 10.0, 12.2, 1…
-    ## $ `Level 2 #`        <dbl> 11, 3, 6, 4, 12, 13, 18, 13, 15, 15, 12, 14, 9, 24,…
-    ## $ `Level 2 %`        <dbl> 28.2, 9.7, 16.2, 12.1, 46.2, 46.4, 36.7, 32.5, 36.6…
-    ## $ `Level 3 #`        <dbl> 20, 22, 29, 28, 6, 5, 10, 18, 18, 18, 9, 9, 10, 15,…
-    ## $ `Level 3 %`        <dbl> 51.3, 71.0, 78.4, 84.8, 23.1, 17.9, 20.4, 45.0, 43.…
-    ## $ `Level 4 #`        <dbl> 6, 4, 2, 1, 2, 0, 1, 5, 3, 2, 1, 2, 0, 1, 3, 7, 1, …
-    ## $ `Level 4 %`        <dbl> 15.4, 12.9, 5.4, 3.0, 7.7, 0.0, 2.0, 12.5, 7.3, 5.1…
-    ## $ `Level 3+4 #`      <dbl> 26, 26, 31, 29, 8, 5, 11, 23, 21, 20, 10, 11, 10, 1…
-    ## $ `Level 3+4 %`      <dbl> 66.7, 83.9, 83.8, 87.9, 30.8, 17.9, 22.4, 57.5, 51.…
-    ## Rows: 478
-    ## Columns: 6
-    ## $ DBN                               <chr> "01M292", "01M448", "01M450", "01M45…
-    ## $ `SCHOOL NAME`                     <chr> "HENRY STREET SCHOOL FOR INTERNATION…
-    ## $ `Num of SAT Test Takers`          <chr> "29", "91", "70", "7", "44", "112", …
-    ## $ `SAT Critical Reading Avg. Score` <chr> "355", "383", "377", "414", "390", "…
-    ## $ `SAT Math Avg. Score`             <chr> "404", "423", "402", "401", "433", "…
-    ## $ `SAT Writing Avg. Score`          <chr> "363", "366", "370", "359", "384", "…
-    ## Rows: 35
-    ## Columns: 3
-    ## $ District                 <chr> "DISTRICT 01", "DISTRICT 02", "DISTRICT 03", …
-    ## $ `YTD % Attendance (Avg)` <dbl> 91.18, 89.01, 89.28, 91.13, 89.08, 91.34, 86.…
-    ## $ `YTD Enrollment(Avg)`    <dbl> 12367, 60823, 21962, 14252, 13170, 25733, 197…
-
     ## $ap_results
-    ## # A tibble: 258 x 5
-    ##    DBN    SchoolName       `AP Test Takers` `Total Exams Ta… `Number of Exams w…
-    ##    <chr>  <chr>                       <dbl>            <dbl>               <dbl>
-    ##  1 01M448 UNIVERSITY NEIG…               39               49                  10
-    ##  2 01M450 EAST SIDE COMMU…               19               21                  NA
-    ##  3 01M515 LOWER EASTSIDE …               24               26                  24
-    ##  4 01M539 NEW EXPLORATION…              255              377                 191
-    ##  5 02M296 High School of …               NA               NA                  NA
-    ##  6 02M298 Pace High School               21               21                  NA
-    ##  7 02M300 Urban Assembly …               99              117                  10
-    ##  8 02M303 Facing History …               42               44                  NA
-    ##  9 02M305 Urban Assembly …               25               37                  15
-    ## 10 02M308 Lower Manhattan…               NA               NA                  NA
-    ## # … with 248 more rows
+    ## [1] "DBN"                                 
+    ## [2] "SchoolName"                          
+    ## [3] "AP Test Takers"                      
+    ## [4] "Total Exams Taken"                   
+    ## [5] "Number of Exams with scores 3 4 or 5"
     ## 
     ## $class_size
-    ## # A tibble: 27,611 x 16
-    ##      CSD BOROUGH `SCHOOL CODE` `SCHOOL NAME`             GRADE `PROGRAM TYPE`
-    ##    <dbl> <chr>   <chr>         <chr>                     <chr> <chr>         
-    ##  1     1 M       M015          P.S. 015 Roberto Clemente 0K    GEN ED        
-    ##  2     1 M       M015          P.S. 015 Roberto Clemente 0K    CTT           
-    ##  3     1 M       M015          P.S. 015 Roberto Clemente 01    GEN ED        
-    ##  4     1 M       M015          P.S. 015 Roberto Clemente 01    CTT           
-    ##  5     1 M       M015          P.S. 015 Roberto Clemente 02    GEN ED        
-    ##  6     1 M       M015          P.S. 015 Roberto Clemente 02    CTT           
-    ##  7     1 M       M015          P.S. 015 Roberto Clemente 03    GEN ED        
-    ##  8     1 M       M015          P.S. 015 Roberto Clemente 03    CTT           
-    ##  9     1 M       M015          P.S. 015 Roberto Clemente 04    GEN ED        
-    ## 10     1 M       M015          P.S. 015 Roberto Clemente 05    GEN ED        
-    ## # … with 27,601 more rows, and 10 more variables:
-    ## #   CORE SUBJECT (MS CORE and 9-12 ONLY) <chr>,
-    ## #   CORE COURSE (MS CORE and 9-12 ONLY) <chr>,
-    ## #   SERVICE CATEGORY(K-9* ONLY) <chr>, NUMBER OF STUDENTS / SEATS FILLED <dbl>,
-    ## #   NUMBER OF SECTIONS <dbl>, AVERAGE CLASS SIZE <dbl>,
-    ## #   SIZE OF SMALLEST CLASS <dbl>, SIZE OF LARGEST CLASS <dbl>,
-    ## #   DATA SOURCE <chr>, SCHOOLWIDE PUPIL-TEACHER RATIO <dbl>
+    ##  [1] "CSD"                                 
+    ##  [2] "BOROUGH"                             
+    ##  [3] "SCHOOL CODE"                         
+    ##  [4] "SCHOOL NAME"                         
+    ##  [5] "GRADE"                               
+    ##  [6] "PROGRAM TYPE"                        
+    ##  [7] "CORE SUBJECT (MS CORE and 9-12 ONLY)"
+    ##  [8] "CORE COURSE (MS CORE and 9-12 ONLY)" 
+    ##  [9] "SERVICE CATEGORY(K-9* ONLY)"         
+    ## [10] "NUMBER OF STUDENTS / SEATS FILLED"   
+    ## [11] "NUMBER OF SECTIONS"                  
+    ## [12] "AVERAGE CLASS SIZE"                  
+    ## [13] "SIZE OF SMALLEST CLASS"              
+    ## [14] "SIZE OF LARGEST CLASS"               
+    ## [15] "DATA SOURCE"                         
+    ## [16] "SCHOOLWIDE PUPIL-TEACHER RATIO"      
     ## 
     ## $demographics
-    ## # A tibble: 10,075 x 38
-    ##    DBN    Name    schoolyear fl_percent frl_percent total_enrollment  prek     k
-    ##    <chr>  <chr>        <dbl>      <dbl>       <dbl>            <dbl> <dbl> <dbl>
-    ##  1 01M015 P.S. 0…   20052006       89.4        NA                281    15    36
-    ##  2 01M015 P.S. 0…   20062007       89.4        NA                243    15    29
-    ##  3 01M015 P.S. 0…   20072008       89.4        NA                261    18    43
-    ##  4 01M015 P.S. 0…   20082009       89.4        NA                252    17    37
-    ##  5 01M015 P.S. 0…   20092010       NA          96.5              208    16    40
-    ##  6 01M015 P.S. 0…   20102011       NA          96.5              203    13    37
-    ##  7 01M015 P.S. 0…   20112012       NA          89.4              189    13    31
-    ##  8 01M019 P.S. 0…   20052006       61.5        NA                402    15    43
-    ##  9 01M019 P.S. 0…   20062007       61.5        NA                312    13    37
-    ## 10 01M019 P.S. 0…   20072008       61.5        NA                338    28    48
-    ## # … with 10,065 more rows, and 30 more variables: grade1 <dbl>, grade2 <dbl>,
-    ## #   grade3 <dbl>, grade4 <dbl>, grade5 <dbl>, grade6 <dbl>, grade7 <dbl>,
-    ## #   grade8 <dbl>, grade9 <dbl>, grade10 <dbl>, grade11 <dbl>, grade12 <dbl>,
-    ## #   ell_num <dbl>, ell_percent <dbl>, sped_num <dbl>, sped_percent <dbl>,
-    ## #   ctt_num <dbl>, selfcontained_num <dbl>, asian_num <dbl>, asian_per <dbl>,
-    ## #   black_num <dbl>, black_per <dbl>, hispanic_num <dbl>, hispanic_per <dbl>,
-    ## #   white_num <dbl>, white_per <dbl>, male_num <dbl>, male_per <dbl>,
-    ## #   female_num <dbl>, female_per <dbl>
-    ## 
-    ## $district_maps
-    ## # A tibble: 33 x 4
-    ##    the_geom                                     SchoolDist Shape_Area Shape_Leng
-    ##    <chr>                                             <dbl>      <dbl>      <dbl>
-    ##  1 MULTIPOLYGON (((-73.97177411031375 40.72582…          1  35160328.     28641.
-    ##  2 MULTIPOLYGON (((-73.86789798628837 40.90294…         10 282540990.     94957.
-    ##  3 MULTIPOLYGON (((-73.78833349900695 40.83466…         11 393227696.    305036.
-    ##  4 MULTIPOLYGON (((-73.93311862859143 40.69579…         16  46763620.     35849.
-    ##  5 MULTIPOLYGON (((-73.88284445574813 40.84781…         12  69097946.     48578.
-    ##  6 MULTIPOLYGON (((-73.9790608491185 40.705946…         13 104870780.     86635.
-    ##  7 MULTIPOLYGON (((-73.95439555417087 40.73911…         14 150295578.     95608.
-    ##  8 MULTIPOLYGON (((-73.98633135042395 40.69105…         15 196154166.    153454.
-    ##  9 MULTIPOLYGON (((-73.92640556921116 40.87762…          6  96341936.     70446.
-    ## 10 MULTIPOLYGON (((-73.91551523934298 40.82470…          7  92263167.     65301.
-    ## # … with 23 more rows
+    ##  [1] "DBN"               "Name"              "schoolyear"       
+    ##  [4] "fl_percent"        "frl_percent"       "total_enrollment" 
+    ##  [7] "prek"              "k"                 "grade1"           
+    ## [10] "grade2"            "grade3"            "grade4"           
+    ## [13] "grade5"            "grade6"            "grade7"           
+    ## [16] "grade8"            "grade9"            "grade10"          
+    ## [19] "grade11"           "grade12"           "ell_num"          
+    ## [22] "ell_percent"       "sped_num"          "sped_percent"     
+    ## [25] "ctt_num"           "selfcontained_num" "asian_num"        
+    ## [28] "asian_per"         "black_num"         "black_per"        
+    ## [31] "hispanic_num"      "hispanic_per"      "white_num"        
+    ## [34] "white_per"         "male_num"          "male_per"         
+    ## [37] "female_num"        "female_per"       
     ## 
     ## $grad_outcomes
-    ## # A tibble: 25,096 x 23
-    ##    Demographic  DBN    `School Name`      Cohort `Total Cohort` `Total Grads - …
-    ##    <chr>        <chr>  <chr>              <chr>           <dbl> <chr>           
-    ##  1 Total Cohort 01M292 HENRY STREET SCHO… 2003                5 s               
-    ##  2 Total Cohort 01M292 HENRY STREET SCHO… 2004               55 37              
-    ##  3 Total Cohort 01M292 HENRY STREET SCHO… 2005               64 43              
-    ##  4 Total Cohort 01M292 HENRY STREET SCHO… 2006               78 43              
-    ##  5 Total Cohort 01M292 HENRY STREET SCHO… 2006 …             78 44              
-    ##  6 Total Cohort 01M448 UNIVERSITY NEIGHB… 2001               64 46              
-    ##  7 Total Cohort 01M448 UNIVERSITY NEIGHB… 2002               52 33              
-    ##  8 Total Cohort 01M448 UNIVERSITY NEIGHB… 2003               87 67              
-    ##  9 Total Cohort 01M448 UNIVERSITY NEIGHB… 2004              112 75              
-    ## 10 Total Cohort 01M448 UNIVERSITY NEIGHB… 2005              121 64              
-    ## # … with 25,086 more rows, and 17 more variables:
-    ## #   Total Grads - % of cohort <dbl>, Total Regents - n <chr>,
-    ## #   Total Regents - % of cohort <dbl>, Total Regents - % of grads <dbl>,
-    ## #   Advanced Regents - n <chr>, Advanced Regents - % of cohort <dbl>,
-    ## #   Advanced Regents - % of grads <dbl>, Regents w/o Advanced - n <chr>,
-    ## #   Regents w/o Advanced - % of cohort <dbl>,
-    ## #   Regents w/o Advanced - % of grads <dbl>, Local - n <chr>,
-    ## #   Local - % of cohort <dbl>, Local - % of grads <dbl>,
-    ## #   Still Enrolled - n <chr>, Still Enrolled - % of cohort <dbl>,
-    ## #   Dropped Out - n <chr>, Dropped Out - % of cohort <dbl>
+    ##  [1] "Demographic"                        "DBN"                               
+    ##  [3] "School Name"                        "Cohort"                            
+    ##  [5] "Total Cohort"                       "Total Grads - n"                   
+    ##  [7] "Total Grads - % of cohort"          "Total Regents - n"                 
+    ##  [9] "Total Regents - % of cohort"        "Total Regents - % of grads"        
+    ## [11] "Advanced Regents - n"               "Advanced Regents - % of cohort"    
+    ## [13] "Advanced Regents - % of grads"      "Regents w/o Advanced - n"          
+    ## [15] "Regents w/o Advanced - % of cohort" "Regents w/o Advanced - % of grads" 
+    ## [17] "Local - n"                          "Local - % of cohort"               
+    ## [19] "Local - % of grads"                 "Still Enrolled - n"                
+    ## [21] "Still Enrolled - % of cohort"       "Dropped Out - n"                   
+    ## [23] "Dropped Out - % of cohort"         
+    ## 
+    ## $hs_directory
+    ##  [1] "dbn"                              "school_name"                     
+    ##  [3] "borough"                          "building_code"                   
+    ##  [5] "phone_number"                     "fax_number"                      
+    ##  [7] "grade_span_min"                   "grade_span_max"                  
+    ##  [9] "expgrade_span_min"                "expgrade_span_max"               
+    ## [11] "bus"                              "subway"                          
+    ## [13] "primary_address_line_1"           "city"                            
+    ## [15] "state_code"                       "postcode"                        
+    ## [17] "website"                          "total_students"                  
+    ## [19] "campus_name"                      "school_type"                     
+    ## [21] "overview_paragraph"               "program_highlights"              
+    ## [23] "language_classes"                 "advancedplacement_courses"       
+    ## [25] "online_ap_courses"                "online_language_courses"         
+    ## [27] "extracurricular_activities"       "psal_sports_boys"                
+    ## [29] "psal_sports_girls"                "psal_sports_coed"                
+    ## [31] "school_sports"                    "partner_cbo"                     
+    ## [33] "partner_hospital"                 "partner_highered"                
+    ## [35] "partner_cultural"                 "partner_nonprofit"               
+    ## [37] "partner_corporate"                "partner_financial"               
+    ## [39] "partner_other"                    "addtl_info1"                     
+    ## [41] "addtl_info2"                      "start_time"                      
+    ## [43] "end_time"                         "se_services"                     
+    ## [45] "ell_programs"                     "school_accessibility_description"
+    ## [47] "number_programs"                  "priority01"                      
+    ## [49] "priority02"                       "priority03"                      
+    ## [51] "priority04"                       "priority05"                      
+    ## [53] "priority06"                       "priority07"                      
+    ## [55] "priority08"                       "priority09"                      
+    ## [57] "priority10"                       "Location 1"                      
+    ## [59] "Community Board"                  "Council District"                
+    ## [61] "Census Tract"                     "BIN"                             
+    ## [63] "BBL"                              "NTA"                             
     ## 
     ## $math_results
-    ## # A tibble: 28,478 x 16
-    ##    DBN    Grade  Year Category     `Number Tested` `Mean Scale Scor… `Level 1 #`
-    ##    <chr>  <chr> <dbl> <chr>                  <dbl>             <dbl>       <dbl>
-    ##  1 01M015 3      2006 All Students              39               667           2
-    ##  2 01M015 3      2007 All Students              31               672           2
-    ##  3 01M015 3      2008 All Students              37               668           0
-    ##  4 01M015 3      2009 All Students              33               668           0
-    ##  5 01M015 3      2010 All Students              26               677           6
-    ##  6 01M015 3      2011 All Students              28               671          10
-    ##  7 01M015 4      2006 All Students              49               629          20
-    ##  8 01M015 4      2007 All Students              40               659           4
-    ##  9 01M015 4      2008 All Students              41               655           5
-    ## 10 01M015 4      2009 All Students              39               655           4
-    ## # … with 28,468 more rows, and 9 more variables: Level 1 % <dbl>,
-    ## #   Level 2 # <dbl>, Level 2 % <dbl>, Level 3 # <dbl>, Level 3 % <dbl>,
-    ## #   Level 4 # <dbl>, Level 4 % <dbl>, Level 3+4 # <dbl>, Level 3+4 % <dbl>
+    ##  [1] "DBN"              "Grade"            "Year"             "Category"        
+    ##  [5] "Number Tested"    "Mean Scale Score" "Level 1 #"        "Level 1 %"       
+    ##  [9] "Level 2 #"        "Level 2 %"        "Level 3 #"        "Level 3 %"       
+    ## [13] "Level 4 #"        "Level 4 %"        "Level 3+4 #"      "Level 3+4 %"     
     ## 
     ## $sat_scores
-    ## # A tibble: 478 x 6
-    ##    DBN    `SCHOOL NAME`      `Num of SAT Tes… `SAT Critical Re… `SAT Math Avg. …
-    ##    <chr>  <chr>              <chr>            <chr>             <chr>           
-    ##  1 01M292 HENRY STREET SCHO… 29               355               404             
-    ##  2 01M448 UNIVERSITY NEIGHB… 91               383               423             
-    ##  3 01M450 EAST SIDE COMMUNI… 70               377               402             
-    ##  4 01M458 FORSYTH SATELLITE… 7                414               401             
-    ##  5 01M509 MARTA VALLE HIGH … 44               390               433             
-    ##  6 01M515 LOWER EAST SIDE P… 112              332               557             
-    ##  7 01M539 NEW EXPLORATIONS … 159              522               574             
-    ##  8 01M650 CASCADES HIGH SCH… 18               417               418             
-    ##  9 01M696 BARD HIGH SCHOOL … 130              624               604             
-    ## 10 02M047 47 THE AMERICAN S… 16               395               400             
-    ## # … with 468 more rows, and 1 more variable: SAT Writing Avg. Score <chr>
-    ## 
-    ## $school_attendance
-    ## # A tibble: 35 x 3
-    ##    District    `YTD % Attendance (Avg)` `YTD Enrollment(Avg)`
-    ##    <chr>                          <dbl>                 <dbl>
-    ##  1 DISTRICT 01                     91.2                 12367
-    ##  2 DISTRICT 02                     89.0                 60823
-    ##  3 DISTRICT 03                     89.3                 21962
-    ##  4 DISTRICT 04                     91.1                 14252
-    ##  5 DISTRICT 05                     89.1                 13170
-    ##  6 DISTRICT 06                     91.3                 25733
-    ##  7 DISTRICT 07                     86.8                 19717
-    ##  8 DISTRICT 08                     87.2                 31625
-    ##  9 DISTRICT 09                     89.3                 34518
-    ## 10 DISTRICT 10                     88.9                 56757
-    ## # … with 25 more rows
+    ## [1] "DBN"                             "SCHOOL NAME"                    
+    ## [3] "Num of SAT Test Takers"          "SAT Critical Reading Avg. Score"
+    ## [5] "SAT Math Avg. Score"             "SAT Writing Avg. Score"
 
 Some items of interest from this initial peek:
 
@@ -446,7 +266,8 @@ add the district number, with a leading 0.
 ``` r
 data$class_size <- 
   data$class_size %>% 
-  mutate(dbn = paste0(str_pad(csd, 2, side = "left", pad = "0"), school_code))
+  mutate(dbn = paste0(str_pad(csd, 2, side = "left", pad = "0"), school_code)) %>% 
+  select(dbn, everything()) # puts the new dbn column at the front
 
 head(data$class_size$dbn)
 ```
@@ -509,3 +330,441 @@ survey_data <- survey_data %>%
 # Append the survey data to the data list
 data <- c(data, survey = list(survey_data))
 ```
+
+## Condensing the data sets
+
+If we take a look at some of the data sets, including `class_size` we’ll
+immiediately see a problem.
+
+``` r
+head(data$class_size)
+```
+
+    ## # A tibble: 6 x 17
+    ##   dbn      csd borough school_code school_name               grade program_type
+    ##   <chr>  <dbl> <chr>   <chr>       <chr>                     <chr> <chr>       
+    ## 1 01M015     1 M       M015        P.S. 015 Roberto Clemente 0K    GEN ED      
+    ## 2 01M015     1 M       M015        P.S. 015 Roberto Clemente 0K    CTT         
+    ## 3 01M015     1 M       M015        P.S. 015 Roberto Clemente 01    GEN ED      
+    ## 4 01M015     1 M       M015        P.S. 015 Roberto Clemente 01    CTT         
+    ## 5 01M015     1 M       M015        P.S. 015 Roberto Clemente 02    GEN ED      
+    ## 6 01M015     1 M       M015        P.S. 015 Roberto Clemente 02    CTT         
+    ## # … with 10 more variables: core_subject_ms_core_and_9_12_only <chr>,
+    ## #   core_course_ms_core_and_9_12_only <chr>, service_category_k_9_only <chr>,
+    ## #   number_of_students_seats_filled <dbl>, number_of_sections <dbl>,
+    ## #   average_class_size <dbl>, size_of_smallest_class <dbl>,
+    ## #   size_of_largest_class <dbl>, data_source <chr>,
+    ## #   schoolwide_pupil_teacher_ratio <dbl>
+
+There are several rows for each high school (as you can see by the
+repeated `school_code` field). In order to combine this data set with
+the SAT scores data, we need to be able to condense data sets like
+`class size` to the point where there is just one row per school. In the
+`class_size` data set it looks like `grade` and `program_type` have
+multiple values per school. By restricting each field to a single value,
+we can filter most of the duplicate rows. Let’s filter `class_size` as
+follows:
+
+-   Only select records where `grade` is `09-12`
+-   Only select records where `program_type` is `GEN ED`
+-   Group the `class_size` data set by `dbn`, and take the average of
+    each column. Essentially we will find the average class size for
+    each school.
+
+``` r
+data$class_size <- data$class_size %>% 
+  filter(grade == "09-12",
+         program_type == "GEN ED") %>% 
+  select(dbn, where(is.numeric)) %>% 
+  group_by(dbn) %>% 
+  summarise(across(everything(), mean))
+```
+
+Let’s check that this has removed all of the duplicate `dbn` in the
+`class_size` data set.
+
+``` r
+anyDuplicated(data$class_size$dbn)
+```
+
+    ## [1] 0
+
+Some of the other data sets also need to be condensed. In the
+`demographics` data set, data was collected for multiple years for the
+same school. Let’s filter to include only the most recent year for each
+school. We can then run the same check for any remaining duplicated
+`dbn`.
+
+``` r
+data$demographics <- data$demographics %>% 
+  filter(schoolyear == "20112012")
+
+anyDuplicated(data$demographics$dbn)
+```
+
+    ## [1] 0
+
+In the `math_results` data set, schools are further segmented by `grade`
+and `year`. We can select a single grade and a single year.
+
+``` r
+data$math_results <- data$math_results %>% 
+  filter(year == 2011,
+         grade == "8")
+
+anyDuplicated(data$math_results$dbn)
+```
+
+    ## [1] 0
+
+Finally, `grad_outcomes` needs to be condensed.
+
+``` r
+data$grad_outcomes <- data$grad_outcomes %>% 
+  filter(cohort == "2006",
+         demographic == "Total Cohort")
+
+anyDuplicated(data$grad_outcomes$dbn)
+```
+
+    ## [1] 0
+
+We have checked a few of our data sets for duplicated `dbn` but we
+haven’t checked all of them. Let’s write a function to check everything.
+
+``` r
+duplicate_check <- 
+  function(df) {
+    anyDuplicated(df$dbn)
+  }
+
+lapply(data, duplicate_check)
+```
+
+    ## $ap_results
+    ## [1] 53
+    ## 
+    ## $class_size
+    ## [1] 0
+    ## 
+    ## $demographics
+    ## [1] 0
+    ## 
+    ## $grad_outcomes
+    ## [1] 0
+    ## 
+    ## $hs_directory
+    ## [1] 0
+    ## 
+    ## $math_results
+    ## [1] 0
+    ## 
+    ## $sat_scores
+    ## [1] 0
+    ## 
+    ## $survey
+    ## [1] 0
+
+Look’s like something funny is going on with `ap_results`. Let’s take a
+closer look.
+
+``` r
+data$ap_results %>% 
+  group_by(dbn) %>% 
+  mutate(dbn_count = n()) %>% 
+  filter(dbn_count > 1) %>% 
+  print()
+```
+
+    ## # A tibble: 2 x 6
+    ## # Groups:   dbn [1]
+    ##   dbn    school_name  ap_test_takers total_exams_tak… number_of_exams… dbn_count
+    ##   <chr>  <chr>                 <dbl>            <dbl>            <dbl>     <int>
+    ## 1 04M610 THE YOUNG W…             41               55               29         2
+    ## 2 04M610 YOUNG WOMEN…             NA               NA               NA         2
+
+It looks like this school has been entered twice. One of the rows has no
+data so we can remove this row.
+
+``` r
+data$ap_results <- data$ap_results %>% 
+  filter(school_name != "YOUNG WOMEN'S LEADERSHIP SCH")
+
+anyDuplicated(data$ap_results$dbn)
+```
+
+    ## [1] 0
+
+# Computing variables
+
+Computing variables can help speed up our analysis by enabling us to
+make comparisons more quickly. We can compute a total SAT score from the
+individual columns `sat_critical_reading_avg_score`,
+`sat_math_avg_score` and `sat_writing_avg_score`. Before we can do this
+we will need to convert those columns from string to number.
+
+``` r
+data$sat_scores <- data$sat_scores %>% 
+  mutate(across(num_of_sat_test_takers:sat_writing_avg_score, as.numeric)) %>% 
+  mutate(sat_score = sat_critical_reading_avg_score +
+                     sat_math_avg_score +
+                     sat_writing_avg_score)
+
+head(data$sat_scores)
+```
+
+    ## # A tibble: 6 x 7
+    ##   dbn    school_name       num_of_sat_test_… sat_critical_read… sat_math_avg_sc…
+    ##   <chr>  <chr>                         <dbl>              <dbl>            <dbl>
+    ## 1 01M292 HENRY STREET SCH…                29                355              404
+    ## 2 01M448 UNIVERSITY NEIGH…                91                383              423
+    ## 3 01M450 EAST SIDE COMMUN…                70                377              402
+    ## 4 01M458 FORSYTH SATELLIT…                 7                414              401
+    ## 5 01M509 MARTA VALLE HIGH…                44                390              433
+    ## 6 01M515 LOWER EAST SIDE …               112                332              557
+    ## # … with 2 more variables: sat_writing_avg_score <dbl>, sat_score <dbl>
+
+Next, let’s parse out the coordinate locations of each school, so we can
+make maps. This will enable us to plot the location of each school.
+Let’s take a look at the `location_1` column in `hs_directory` where
+these coordinates are stored
+
+``` r
+head(data$hs_directory$location_1)
+```
+
+    ## [1] "8 21 Bay 25 Street\nFar Rockaway, NY 11691\n(40.601989336, -73.762834323)"
+    ## [2] "2630 Benson Avenue\nBrooklyn, NY 11214\n(40.593593811, -73.984729232)"    
+    ## [3] "1014 Lafayette Avenue\nBrooklyn, NY 11221\n(40.692133704, -73.931503172)" 
+    ## [4] "1980 Lafayette Avenue\nBronx, NY 10473\n(40.822303765, -73.85596139)"     
+    ## [5] "100 Amsterdam Avenue\nNew York, NY 10023\n(40.773670507, -73.985268558)"  
+    ## [6] "350 Grand Street\nNew York, NY 10002\n(40.716867224, -73.989531943)"
+
+The coordinates all appear to follow a newline character (`\n`) and an
+opening parenthesis (`(`).
+
+``` r
+data$hs_directory <- data$hs_directory %>% 
+  mutate(lat = as.numeric(str_extract(location_1, "(?<=\\\n\\()(-*\\d+\\.\\d+)")),
+         lon = as.numeric(str_extract(location_1, "(-*\\d+\\.\\d+)(?=\\)$)")))
+
+data$hs_directory %>% 
+  select(lat, lon) %>% 
+  head()
+```
+
+    ## # A tibble: 6 x 2
+    ##     lat   lon
+    ##   <dbl> <dbl>
+    ## 1  40.6 -73.8
+    ## 2  40.6 -74.0
+    ## 3  40.7 -73.9
+    ## 4  40.8 -73.9
+    ## 5  40.8 -74.0
+    ## 6  40.7 -74.0
+
+# Combining the data sets
+
+Now we are ready to combine our data sets into one large dataframe using
+the `dbn` column. We will need to perform a `full_join` to ensure that
+we don’t lose any data, since not all schools are present in all data
+sets.
+
+``` r
+full <- data$hs_directory %>% 
+  full_join(data$ap_results,
+            by = "dbn") %>% 
+  full_join(data$class_size,
+            by = "dbn") %>% 
+  full_join(data$demographics,
+            by = "dbn") %>% 
+  full_join(data$grad_outcomes,
+            by = "dbn") %>% 
+  full_join(data$math_results,
+            by = "dbn") %>%
+  full_join(data$sat_scores,
+            by = "dbn") %>% 
+  full_join(data$survey,
+            by = "dbn")
+
+head(full)
+```
+
+    ## # A tibble: 6 x 188
+    ##   dbn    school_name.x             borough building_code phone_number fax_number
+    ##   <chr>  <chr>                     <chr>   <chr>         <chr>        <chr>     
+    ## 1 27Q260 Frederick Douglass Acade… Queens  Q465          718-471-2154 718-471-2…
+    ## 2 21K559 Life Academy High School… Brookl… K400          718-333-7750 718-333-7…
+    ## 3 16K393 Frederick Douglass Acade… Brookl… K026          718-574-2820 718-574-2…
+    ## 4 08X305 Pablo Neruda Academy      Bronx   X450          718-824-1682 718-824-1…
+    ## 5 03M485 Fiorello H. LaGuardia Hi… Manhat… M485          212-496-0700 212-724-5…
+    ## 6 02M305 Urban Assembly Academy o… Manhat… M445          212-505-0745 212-674-8…
+    ## # … with 182 more variables: grade_span_min <dbl>, grade_span_max <dbl>,
+    ## #   expgrade_span_min <dbl>, expgrade_span_max <dbl>, bus <chr>, subway <chr>,
+    ## #   primary_address_line_1 <chr>, city <chr>, state_code <chr>, postcode <dbl>,
+    ## #   website <chr>, total_students <dbl>, campus_name <chr>, school_type <chr>,
+    ## #   overview_paragraph <chr>, program_highlights <chr>, language_classes <chr>,
+    ## #   advancedplacement_courses <chr>, online_ap_courses <chr>,
+    ## #   online_language_courses <chr>, extracurricular_activities <chr>,
+    ## #   psal_sports_boys <chr>, psal_sports_girls <chr>, psal_sports_coed <chr>,
+    ## #   school_sports <chr>, partner_cbo <chr>, partner_hospital <chr>,
+    ## #   partner_highered <chr>, partner_cultural <chr>, partner_nonprofit <chr>,
+    ## #   partner_corporate <chr>, partner_financial <chr>, partner_other <chr>,
+    ## #   addtl_info1 <chr>, addtl_info2 <chr>, start_time <time>, end_time <time>,
+    ## #   se_services <chr>, ell_programs <chr>,
+    ## #   school_accessibility_description <chr>, number_programs <dbl>,
+    ## #   priority01 <chr>, priority02 <chr>, priority03 <chr>, priority04 <chr>,
+    ## #   priority05 <chr>, priority06 <chr>, priority07 <chr>, priority08 <chr>,
+    ## #   priority09 <chr>, priority10 <chr>, location_1 <chr>,
+    ## #   community_board <dbl>, council_district <dbl>, census_tract <dbl>,
+    ## #   bin <dbl>, bbl <dbl>, nta <chr>, lat <dbl>, lon <dbl>, school_name.y <chr>,
+    ## #   ap_test_takers <dbl>, total_exams_taken <dbl>,
+    ## #   number_of_exams_with_scores_3_4_or_5 <dbl>, csd <dbl>,
+    ## #   number_of_students_seats_filled <dbl>, number_of_sections <dbl>,
+    ## #   average_class_size <dbl>, size_of_smallest_class <dbl>,
+    ## #   size_of_largest_class <dbl>, schoolwide_pupil_teacher_ratio <dbl>,
+    ## #   name <chr>, schoolyear <dbl>, fl_percent <dbl>, frl_percent <dbl>,
+    ## #   total_enrollment <dbl>, prek <dbl>, k <dbl>, grade1 <dbl>, grade2 <dbl>,
+    ## #   grade3 <dbl>, grade4 <dbl>, grade5 <dbl>, grade6 <dbl>, grade7 <dbl>,
+    ## #   grade8 <dbl>, grade9 <dbl>, grade10 <dbl>, grade11 <dbl>, grade12 <dbl>,
+    ## #   ell_num <dbl>, ell_percent <dbl>, sped_num <dbl>, sped_percent <dbl>,
+    ## #   ctt_num <dbl>, selfcontained_num <dbl>, asian_num <dbl>, asian_per <dbl>,
+    ## #   black_num <dbl>, black_per <dbl>, …
+
+# Adding in columns
+
+Now that we have our `full` data frame we are almost ready to do our
+analysis. We first need to check for missing data. Some of the AP scores
+data has missing values. We can convert these to 0.
+
+``` r
+full <- full %>% 
+  replace_na(list(ap_test_takers = 0,
+                  total_exams_taken = 0,
+                  number_of_exams_with_scores_3_4_or_5 = 0))
+
+full %>% 
+  select(c(ap_test_takers, total_exams_taken, number_of_exams_with_scores_3_4_or_5)) %>% 
+  head()
+```
+
+    ## # A tibble: 6 x 3
+    ##   ap_test_takers total_exams_taken number_of_exams_with_scores_3_4_or_5
+    ##            <dbl>             <dbl>                                <dbl>
+    ## 1              0                 0                                    0
+    ## 2              0                 0                                    0
+    ## 3              0                 0                                    0
+    ## 4              0                 0                                    0
+    ## 5            691              1236                                  790
+    ## 6             25                37                                   15
+
+Next we need to add a `school_dist` column that indicates the school
+district of the school. this will enable us to match up school districts
+and plot out district level statistics using the district maps we
+downloaded earlier. Recalling our [earlier
+image](https://teachnyc.zendesk.com/hc/article_attachments/360079392731/Screen_Shot_2020-12-10_at_10.55.35_AM.png "DBN Explainer"),
+this can be extracted from the `dbn` column by taking the first 2
+characters from the DBN code.
+
+``` r
+full <- full %>% 
+  mutate(school_dist = str_sub(dbn,1,2))
+
+head(full$school_dist)
+```
+
+    ## [1] "27" "21" "16" "08" "03" "02"
+
+# Computing correlations
+
+A good way to explore a data set and see what columns are related to the
+one you care about is to compute correlations. In this case we are
+interested in the `sat_score` column.
+
+In order to do this we will need to impute any missing values in the
+numerical columns. We will simply use the column mean as our imputed
+value.
+
+``` r
+# Select only numeric columns
+full_num <- full %>% 
+  select(where(is.numeric))
+
+# Impute missing values
+#full_num <- full_num %>% 
+#  mutate(across(everything(),
+#                ~ if_else(is.na(.x), mean(.x, na.rm = TRUE), .x)))
+
+# Create a dataframe of correlation coefficients (r)
+# Every variable is correlated against every other
+full_cor <- as_tibble(cor(full_num, use = "pairwise.complete.obs", method = "pearson"),
+                      rownames = "variable")
+
+# Select just the sat_score correlations
+sat_cor <- full_cor %>% 
+  select(variable, sat_score)
+```
+
+One [widely accepted
+interpretation](http://www.statstutor.ac.uk/resources/uploaded/pearsons.pdf "Interpreting correlation coefficients")
+of correlation coefficients states that anything with an absolute
+coefficient of 0.4 or above can be considered to be moderately
+correlated.
+
+Let’s just show the variables that are correlated moderately or above
+with `sat_score`. We can remove `sat_score` from the variable column
+(since this just shows how `sat_score` is correlated with itself) along
+with the columns that factored into the `sat_score` calculation as we
+know they will also be correlated.
+
+``` r
+sat_cor %>% 
+  filter(!variable %in% c("sat_score",
+                          "sat_writing_avg_score",
+                          "sat_critical_reading_avg_score",
+                          "sat_math_avg_score"),
+         sat_score >= 0.4 | sat_score <= -0.4) %>% 
+  arrange(desc(sat_score))
+```
+
+    ## # A tibble: 39 x 2
+    ##    variable                           sat_score
+    ##    <chr>                                  <dbl>
+    ##  1 grade1                                 1    
+    ##  2 grade2                                 1    
+    ##  3 grade3                                 1    
+    ##  4 grade4                                 1    
+    ##  5 grade5                                 1    
+    ##  6 k                                      0.985
+    ##  7 mean_scale_score                       0.791
+    ##  8 advanced_regents_percent_of_cohort     0.782
+    ##  9 level_3_4_percent                      0.771
+    ## 10 advanced_regents_percent_of_grads      0.743
+    ## # … with 29 more rows
+
+Given that one of our initial research questions was to explore any
+relationships between race and SAT scores, let’s also do a deeper dive
+into some of the demographic variables. We can plot a few of these on
+scatter plots alongside SAT score.
+
+Let’s define a function to draw our scatter plots
+
+``` r
+scatter <- function(x,y) {
+  plot(x, y, pch = 19, col = "lightblue")
+  abline(lm(y ~ x), col = "red", lwd = 3)
+  text(paste("Correlation:", round(cor(x, y, use = "complete.obs"), 2)), x = 60, y = 1000)
+}
+```
+
+Now let’s plot percent of white students against SAT score.
+![](nyc-sat-scores_files/figure-gfm/scatter%20white-1.png)<!-- -->
+
+Percent of Asian students against SAT acores.
+![](nyc-sat-scores_files/figure-gfm/scatter%20asian-1.png)<!-- -->
+
+Percent of hispanic students against SAT score.
+![](nyc-sat-scores_files/figure-gfm/scatter%20hispanic-1.png)<!-- -->
+
+And percent of black students.
+![](nyc-sat-scores_files/figure-gfm/scatter%20black-1.png)<!-- -->
