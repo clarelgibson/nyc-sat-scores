@@ -360,6 +360,8 @@ And percent of black students.
 scatter(full$black_per, full$sat_score)
 ```
 
+# Setting the context
+Let's build a map of where the schools are located in NYC.
 
 [1]: <https://www.dataquest.io/blog/data-science-portfolio-project/> "Data Science Portfolio Tutorial by Dataquest.io"
 [2]: <https://en.wikipedia.org/wiki/SAT> "SAT wiki"
